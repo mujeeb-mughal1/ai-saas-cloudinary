@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 
 // Added (.*) to handle sub-routes properly
 const isPublicRoute = createRouteMatcher([
-    "/signin(.*)",
-    "/signup(.*)",
+    "/sign-in(.*)",
+    "/sign-up(.*)",
     "/",
     "/home(.*)",
 ]);
@@ -19,7 +19,7 @@ export default clerkMiddleware(async (auth, req) => {
     const isAccessingDashboard = currentUrl.pathname === "/home";
     const isApiRequest = currentUrl.pathname.startsWith("/api");
 
-    // 1. Redirect logged-in users away from public pages (like signin) to the dashboard
+    // 1. Redirect logged-in users away from public pages (like sign-in) to the dashboard
     if (userId && isPublicRoute(req) && !isAccessingDashboard) {
         return NextResponse.redirect(new URL("/home", req.url));
     }
@@ -31,8 +31,8 @@ export default clerkMiddleware(async (auth, req) => {
             if (isApiRequest) {
                 return new NextResponse("Unauthorized", { status: 401 });
             }
-            // For standard page requests, redirect to signin
-            return NextResponse.redirect(new URL("/signin", req.url));
+            // For standard page requests, redirect to sign-in
+            return NextResponse.redirect(new URL("/sign-in", req.url));
         }
     }
 
