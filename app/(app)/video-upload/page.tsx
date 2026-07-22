@@ -1,10 +1,9 @@
 "use client"
-import React, {useState} from "react"
+import React, { useState } from "react"
 import axios from 'axios'
-import {useRouter} from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
-
-function VideoUpload(){
+function VideoUpload() {
     const [file, setFile] = useState<File | null>(null)
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
@@ -14,16 +13,18 @@ function VideoUpload(){
 
     const router = useRouter()
 
-    //max file size of 70mb
-    const MAX_FILE_SIZE = 70*1024*1024;
+    // Max file size of 70MB
+    const MAX_FILE_SIZE = 70 * 1024 * 1024;
 
-    const handleSubmit = async(e: React.FormEvent<HTMLFormElement)=>{
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
+
+        const formElement = e.currentTarget;
 
         setError(null)
         setSuccess(null)
 
-        if(!file) return;
+        if (!file) return;
         
         if (file.size > MAX_FILE_SIZE) {
             setError("File size exceeds the 70MB limit.");
@@ -31,51 +32,50 @@ function VideoUpload(){
         }
 
         setIsUploading(true)
-        const formData= new FormData();
+        const formData = new FormData();
         formData.append("file", file);
         formData.append("title", title);
         formData.append("description", description);
         formData.append("originalSize", file.size.toString());
 
         try {
-            const response = await axios.post("/api/video-upload", formData)
+            await axios.post("/api/video-upload", formData)
 
-            //check for 200 response
-           setSuccess("Video uploaded successfully!")
-           setTitle("")
-           setDescription("")
-           setFile(null)
-           e.currentTarget.reset()
+            setSuccess("Video uploaded successfully!")
+            setTitle("")
+            setDescription("")
+            setFile(null)
+            formElement.reset()
+
+            // 🚀 Automatically redirect to homepage after a successful upload
+            setTimeout(() => {
+                router.push("/home");
+            }, 1000); // Short delay so users see the success message briefly
 
         } catch (error) {
             console.error("Video Upload Failed:", error)
             setError("Failed to upload video. Please try again.")
-
-        }finally{
+        } finally {
             setIsUploading(false)
         }
     }
- 
- 
+
     return (
-        <div className="container mx-auto p-4">
-          <h1 className="text-2xl font-bold mb-4">Upload Video</h1>
+        <div className="container mx-auto p-4 max-w-2xl">
+          <h1 className="text-2xl font-bold mb-4 text-base-content">Upload Video</h1>
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Display Error Message */}
             {error && (
                 <div className="alert alert-error mb-4">
                     <span>{error}</span>
                 </div>
             )}
 
-            {/* Display Success Message */}
             {success && (
                 <div className="alert alert-success mb-4">
                     <span>{success}</span>
                 </div>
             )}
-
 
             <div>
               <label className="label">
@@ -113,15 +113,19 @@ function VideoUpload(){
             </div>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary w-full"
               disabled={isUploading}
             >
-              {isUploading ? "Uploading..." : "Upload Video"}
+              {isUploading ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Uploading...
+                  </>
+              ) : "Upload Video"}
             </button>
           </form>
         </div>
       );
 }
-
 
 export default VideoUpload
