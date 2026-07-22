@@ -1,49 +1,63 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-// Added (.*) to handle sub-routes properly
+// 1. PUBLIC ROUTES
+// We include "/" and "/home(.*)" here so unauthenticated users can see the main feed.
 const isPublicRoute = createRouteMatcher([
-    "/sign-in(.*)",
-    "/sign-up(.*)",
-    "/",
-    "/home(.*)",
+    '/',
+    '/home(.*)', 
+    '/social-share(.*)', // Adding this based on your earlier requirement
+    '/sign-in(.*)',
+    '/sign-up(.*)'
 ]);
 
+// 2. PUBLIC API ROUTES
 const isPublicApiRoute = createRouteMatcher([
-    "/api(.*)" 
+    '/api/videos'
+]);
+
+// 3. AUTH-ONLY PAGES (Pages logged-in users shouldn't see)
+const isAuthPage = createRouteMatcher([
+    '/sign-in(.*)',
+    '/sign-up(.*)'
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+    // Clerk v5 strictly requires await here
     const { userId } = await auth();
     const currentUrl = new URL(req.url);
-    const isAccessingDashboard = currentUrl.pathname === "/home";
-    const isApiRequest = currentUrl.pathname.startsWith("/api");
+    const isApiRequest = currentUrl.pathname.startsWith('/api');
+    const isRoot = currentUrl.pathname === '/';
 
-    // 1. Redirect logged-in users away from public pages (like sign-in) to the dashboard
-    if (userId && isPublicRoute(req) && !isAccessingDashboard) {
-        return NextResponse.redirect(new URL("/home", req.url));
+    // --- RULE 1: Redirect Logged-In Users ---
+    // If logged in and they hit "/", or a sign-in/sign-up page, send them to "/home"
+    if (userId && (isAuthPage(req) || isRoot)) {
+        return NextResponse.redirect(new URL('/home', req.url));
     }
 
-    // 2. Protect routes for unauthenticated users
-    if (!userId) {
-        if (!isPublicRoute(req) && !isPublicApiRoute(req)) {
-            // For API requests, return a standard 401 instead of a redirect
-            if (isApiRequest) {
-                return new NextResponse("Unauthorized", { status: 401 });
-            }
-            // For standard page requests, redirect to sign-in
-            return NextResponse.redirect(new URL("/sign-in", req.url));
+    // --- RULE 2: Implicit Deny (Secure by Default) ---
+    // If the user is NOT logged in, and the route is NOT whitelisted as public...
+    if (!userId && !isPublicRoute(req) && !isPublicApiRoute(req)) {
+        
+        // Return a proper 401 JSON for blocked API requests so Axios/fetch doesn't crash
+        if (isApiRequest) {
+            return new NextResponse(
+                JSON.stringify({ error: 'Unauthorized access' }), 
+                { status: 401, headers: { 'Content-Type': 'application/json' } }
+            );
         }
+        
+        // Redirect unauthorized page access to the sign-in screen
+        return NextResponse.redirect(new URL('/sign-in', req.url));
     }
 
+    // Allow the request to proceed
     return NextResponse.next();
 });
 
 export const config = {
     matcher: [
-        // Skip Next.js internals and static files
         '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-        // Always run for API routes
         '/(api|trpc)(.*)',
     ],
 };
