@@ -1,3 +1,18 @@
+## Cloudinary Showcase — Full-Stack Media SaaS Platform
+
+A production-grade media management platform engineered for efficient video and image lifecycle management, featuring seamless cloud integration, robust database tracking, and a high-performance UI/UX.
+
+### Key Features
+
+* **Intelligent Media Pipeline:** Stream-based video uploads with automated file validation and metadata indexing in PostgreSQL, paired with on-the-fly image transformations leveraging `CldImage` and AI-driven gravity cropping.
+* **Dual-State Video Interaction:** Implements an optimized user experience with silent 15-second hover-previews for rapid content scanning, alongside a secondary click-to-play mode supporting native audio and full playback controls.
+* **Social Share & Transformation Hub:** Real-time aspect ratio cropping tailored for multi-platform publishing, backed by a secure `blob`-based download utility with dynamic naming and loading state protection.
+* **Modern Tech Stack:** Built using Next.js (App Router), Tailwind CSS, daisyUI, Prisma ORM, and PostgreSQL.
+
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
